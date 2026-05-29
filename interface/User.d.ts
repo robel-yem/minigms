@@ -5,7 +5,7 @@ export interface IUser{
     username: string;
     email: string;
     passHash?: string;
-    birthdate: Date;
+    birthDate: Date;
     avatar?: string;
     gender: "M" | "F",
     enabled: boolean;

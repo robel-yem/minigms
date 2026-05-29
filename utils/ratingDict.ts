@@ -1,0 +1,1 @@
+export const ratingMap = ["zero_star","one_star", "two_star", "three_star", "four_star", "five_star"];

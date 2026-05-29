@@ -23,12 +23,17 @@ function serverError(res: Response, message?: string){
     res.status(500).end(message ?? "Internal server error.");
 }
 
+function unauthorized(res: Response, message?: string){
+    res.status(403).end(message ?? "User not authorized to take this action");
+}
+
 const responseHandler = {
     sendSuccess,
     sendCreated,
     unauthenticated,
     badRequest,
     notFound,
-    serverError
+    serverError,
+    unauthorized
 }
 export default responseHandler;

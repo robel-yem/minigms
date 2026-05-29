@@ -1,35 +1,37 @@
-import { readFile } from "fs/promises";
-import { IUser } from "../interface";
-import path from "node:path";
-import { writeFile } from "node:fs/promises";
+import { prisma } from "../lib/prisma";
+import { usersCreateInput, usersUpdateInput } from "../generated/prisma/models";
 
-const filePath = path.resolve(__dirname, "data", "users.json");
-export const createUser = async(user : IUser) => {
+interface DALReturn {
+    status: boolean,
+    data? : any
+}
+export const createUser = async(user :  usersCreateInput): Promise<DALReturn> => {
     try{
-        const data = await readFile(filePath, "utf8");
-        const parsedData: IUser[] = JSON.parse(data);
-        parsedData.push(user);
-
-        await writeFile(filePath, JSON.stringify(parsedData, null, 2), "utf8");
+        const createdUser = await prisma.users.create({
+            data: {
+                ...user,
+                enabled: true,
+            }
+        });
+        return {
+            status: true,
+            data: createdUser
+        }
     }
     catch(error){
         console.log(error);
+        return {
+            status: false
+        }
     }
 }
 
-export const updateUser = async ( id: string ,user : Partial<IUser> & Record<string, any>) => {
+export const updateUser = async ( id: string ,user : usersUpdateInput) => {
      try{
-        const data = await readFile(filePath, "utf8");
-        const parsedData: IUser[] = JSON.parse(data);
-        let match = parsedData.find(user => user.userID === id) as Record<string, any>;
-
-        if(match){
-            for (const key in user){
-                match[key] = user[key];
-            }
-        }
-
-        await writeFile(filePath, JSON.stringify(parsedData, null, 2), "utf8");
+        await prisma.users.update({
+            where: {user_id: id},
+            data: {...user}
+        });
     }
     catch(error){
         console.log(error);
@@ -38,42 +40,49 @@ export const updateUser = async ( id: string ,user : Partial<IUser> & Record<str
 
 export const removeUser = async(id: string) => {
      try{
-        const data = await readFile(filePath, "utf8");
-        const parsedData: IUser[] = JSON.parse(data);
-        const index = parsedData.findIndex(user => user.userID === id);
-
-        if(index ){
-            parsedData.splice(index);
-        }
-
-        await writeFile(filePath, JSON.stringify(parsedData, null, 2), "utf8");
+        await prisma.users.update({
+            where: {user_id: id},
+            data: {is_deleted: true}
+        });
     }
     catch(error){
         console.log(error);
     }
 }
 
-export const fetchUser = async(id: string) => {
+export const fetchUserByUserID = async (id: string) => {
     try{
-        const data = await readFile(filePath, "utf8");
-        const parsedData: IUser[] = JSON.parse(data);
-        const match = parsedData.find(user => user.userID === id);
-
-        if(match ){
-            return match;
-        }
+        const user = await prisma.users.findUnique({where: {user_id: id}});
+        return user;
+    }
+    catch (error){
+        console.log(error);
+    }
+}
+export const fetchUserByUsername = async(username: string) => {
+    try{
+        const user = prisma.users.findUnique({where: {username: username}});
+        return user;
     }
     catch(error){
+        console.log(error);
+    }
+}
+
+export const fetchUserByEmail = async (email: string) => {
+    try{
+        const user = await prisma.users.findUnique({where: {email: email}});
+        return user;
+    }
+    catch (error){
         console.log(error);
     }
 }
 
 export const fetchAllUsers = async() => {
     try{
-        const data = await readFile(filePath, "utf8");
-        const parsedData: IUser[] = JSON.parse(data);
-
-        return parsedData;
+        const users = await prisma.users.findMany();
+        return users;
     }
     catch(error){
         console.log(error);
